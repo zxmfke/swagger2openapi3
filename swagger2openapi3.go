@@ -3,7 +3,6 @@ package swagger2openapi3
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/getkin/kin-openapi/openapi2conv"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -13,6 +12,8 @@ import (
 	"io"
 	"os"
 )
+
+var Version = "0.0.1"
 
 // Swagger2Convertor convert swagger2 to openapi3
 func Swagger2Convertor(target string) error {
@@ -46,7 +47,6 @@ func Swagger2Convertor(target string) error {
 		return err
 	}
 
-	fmt.Printf("%s", openapi3Json)
 	return nil
 }
 
@@ -71,8 +71,8 @@ func LoadAndValidate(target string) ([]byte, error) {
 // WriteToNewFile save to a new swagger.json
 func WriteToNewFile(reader io.Reader) error {
 
-	_ = os.MkdirAll("./data", 0776)
-	fd, err := os.OpenFile("./data/swagger.json", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0776)
+	_ = os.MkdirAll("./openapi", 0776)
+	fd, err := os.OpenFile("./openapi/swagger.json", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0776)
 	if err != nil {
 		return err
 	}
