@@ -12,7 +12,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	_ "docs"
+	_ "github.com/zxmfke/swagger2openapi3/example/docs"
 )
 
 // @title           Example API

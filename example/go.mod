@@ -2,10 +2,6 @@ module github.com/zxmfke/swagger2openapi3/example
 
 go 1.22.2
 
-replace (
-	docs => ./docs
-)
-
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/swaggo/files v1.0.1
