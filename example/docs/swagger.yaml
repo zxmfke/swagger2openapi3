@@ -1,0 +1,49 @@
+basePath: /api/v1
+definitions:
+  main.HelloReq:
+    properties:
+      name:
+        type: string
+    type: object
+  main.HelloResp:
+    properties:
+      text:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server for swag example.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Example API
+  version: "1.0"
+paths:
+  /api/v1/hello:
+    post:
+      consumes:
+      - application/json
+      description: hello, welcome
+      parameters:
+      - description: HelloReq
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/main.HelloReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.HelloResp'
+      summary: welcome and hello
+      tags:
+      - hello
+swagger: "2.0"

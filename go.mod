@@ -31,10 +31,10 @@ require (
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
+	github.com/ugorji/go/codec v1.2.12 // indirect
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.7.0 // indirect
+	golang.org/x/text v0.15.0 // indirect
+	golang.org/x/tools v0.21.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect

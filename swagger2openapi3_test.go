@@ -5,7 +5,7 @@ import (
 )
 
 func TestSwagger2openapi3(t *testing.T) {
-	if err := Swagger2Convertor("swagger.json"); err != nil {
+	if err := Swagger2Convertor("swagger.json", true); err != nil {
 		t.Errorf("%s", err.Error())
 		return
 	}

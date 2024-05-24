@@ -11,12 +11,13 @@ import (
 	"github.com/go-openapi/validate"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 var Version = "0.0.1"
 
 // Swagger2Convertor convert swagger2 to openapi3
-func Swagger2Convertor(target string) error {
+func Swagger2Convertor(target string, overSwaggerV2 bool) error {
 
 	var (
 		err          error
@@ -43,11 +44,13 @@ func Swagger2Convertor(target string) error {
 
 	// get openapi3 json
 	openapi3Json, _ = Marshal(docOpenapi3)
-	if err = WriteToNewFile(bytes.NewBuffer(openapi3Json)); err != nil {
-		return err
+	buf := bytes.NewBuffer(openapi3Json)
+
+	if overSwaggerV2 {
+		return WriteOverSwagger(target, buf)
 	}
 
-	return nil
+	return WriteToNewFile(buf)
 }
 
 // LoadAndValidate load input swagger json and validate it
@@ -68,11 +71,24 @@ func LoadAndValidate(target string) ([]byte, error) {
 	return doc.Raw().MarshalJSON()
 }
 
+// WriteOverSwagger 覆盖掉之前生成的 swagger 2.0 的 swagger.json
+func WriteOverSwagger(target string, reader io.Reader) error {
+	fd, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0776)
+	if err != nil {
+		return err
+	}
+
+	_, _ = io.Copy(fd, reader)
+	fd.Close()
+
+	return nil
+}
+
 // WriteToNewFile save to a new swagger.json
 func WriteToNewFile(reader io.Reader) error {
 
 	_ = os.MkdirAll("./openapi", 0776)
-	fd, err := os.OpenFile("./openapi/swagger.json", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0776)
+	fd, err := os.OpenFile(filepath.Join("./openapi", "swagger.json"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0776)
 	if err != nil {
 		return err
 	}

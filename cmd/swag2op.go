@@ -52,14 +52,16 @@ type SwaggerCtl struct {
 	genCfg                *gen.Config
 	outputDir             string
 	disableConvertOpenApi bool
+	overSwaggerV2         bool
 }
 
-func newSwaggerCtl(cfg *gen.Config, disableConvertOpenApi bool) *SwaggerCtl {
+func newSwaggerCtl(cfg *gen.Config, disableConvertOpenApi, overSwaggerV2 bool) *SwaggerCtl {
 	return &SwaggerCtl{
 		gen:                   gen.New(),
 		genCfg:                cfg,
 		outputDir:             cfg.OutputDir,
 		disableConvertOpenApi: disableConvertOpenApi,
+		overSwaggerV2:         overSwaggerV2,
 	}
 }
 
@@ -79,7 +81,7 @@ func (s *SwaggerCtl) convert2openApiV3() error {
 
 	var targetJson = filepath.Join(s.outputDir, "swagger.json")
 
-	return swagger2openapi3.Swagger2Convertor(targetJson)
+	return swagger2openapi3.Swagger2Convertor(targetJson, s.overSwaggerV2)
 }
 
 var initFlags = []cli.Flag{
@@ -87,6 +89,11 @@ var initFlags = []cli.Flag{
 		Name:    disableConvertOpenApiV3,
 		Aliases: []string{"nc"},
 		Usage:   "Convert generated swagger.json to openApi v3 format, enabled by default",
+	},
+	&cli.BoolFlag{
+		Name:    overSwaggerV2,
+		Aliases: []string{"os"},
+		Usage:   "Generate openApi 3.0 json over the swagger.json which is the output dir join swagger.json",
 	},
 	&cli.BoolFlag{
 		Name:    quietFlag,
@@ -294,7 +301,7 @@ func initAction(ctx *cli.Context) error {
 		CollectionFormat:    collectionFormat,
 		PackagePrefix:       ctx.String(packagePrefixFlag),
 		State:               ctx.String(stateFlag),
-	}, ctx.Bool(disableConvertOpenApiV3))
+	}, ctx.Bool(disableConvertOpenApiV3), ctx.Bool(overSwaggerV2))
 
 	return swaggerCtl.build().convert2openApiV3()
 }
