@@ -16,34 +16,35 @@ import (
 )
 
 const (
-	disableConvertOpenApiV3  = "disableOpenApiV3"
-	overSwaggerV2            = "overSwaggerV2"
-	searchDirFlag            = "dir"
-	excludeFlag              = "exclude"
-	generalInfoFlag          = "generalInfo"
-	propertyStrategyFlag     = "propertyStrategy"
-	outputFlag               = "output"
-	outputTypesFlag          = "outputTypes"
-	parseVendorFlag          = "parseVendor"
-	parseDependencyFlag      = "parseDependency"
-	parseDependencyLevelFlag = "parseDependencyLevel"
-	markdownFilesFlag        = "markdownFiles"
-	codeExampleFilesFlag     = "codeExampleFiles"
-	parseInternalFlag        = "parseInternal"
-	generatedTimeFlag        = "generatedTime"
-	requiredByDefaultFlag    = "requiredByDefault"
-	parseDepthFlag           = "parseDepth"
-	instanceNameFlag         = "instanceName"
-	overridesFileFlag        = "overridesFile"
-	parseGoListFlag          = "parseGoList"
-	quietFlag                = "quiet"
-	tagsFlag                 = "tags"
-	parseExtensionFlag       = "parseExtension"
-	templateDelimsFlag       = "templateDelims"
-	packageName              = "packageName"
-	collectionFormatFlag     = "collectionFormat"
-	packagePrefixFlag        = "packagePrefix"
-	stateFlag                = "state"
+	disableConvertOpenApiV3Flag   = "disableOpenApiV3"
+	disableOverwriteSwaggerV2Flag = "disableOverwriteSwaggerV2"
+	openapiOutputDirFlag          = "openapiOutputDir"
+	searchDirFlag                 = "dir"
+	excludeFlag                   = "exclude"
+	generalInfoFlag               = "generalInfo"
+	propertyStrategyFlag          = "propertyStrategy"
+	outputFlag                    = "output"
+	outputTypesFlag               = "outputTypes"
+	parseVendorFlag               = "parseVendor"
+	parseDependencyFlag           = "parseDependency"
+	parseDependencyLevelFlag      = "parseDependencyLevel"
+	markdownFilesFlag             = "markdownFiles"
+	codeExampleFilesFlag          = "codeExampleFiles"
+	parseInternalFlag             = "parseInternal"
+	generatedTimeFlag             = "generatedTime"
+	requiredByDefaultFlag         = "requiredByDefault"
+	parseDepthFlag                = "parseDepth"
+	instanceNameFlag              = "instanceName"
+	overridesFileFlag             = "overridesFile"
+	parseGoListFlag               = "parseGoList"
+	quietFlag                     = "quiet"
+	tagsFlag                      = "tags"
+	parseExtensionFlag            = "parseExtension"
+	templateDelimsFlag            = "templateDelims"
+	packageName                   = "packageName"
+	collectionFormatFlag          = "collectionFormat"
+	packagePrefixFlag             = "packagePrefix"
+	stateFlag                     = "state"
 )
 
 type SwaggerCtl struct {
@@ -52,16 +53,18 @@ type SwaggerCtl struct {
 	genCfg                *gen.Config
 	outputDir             string
 	disableConvertOpenApi bool
-	overSwaggerV2         bool
+	overrideSwaggerV2     bool
+	openApiOutputDir      string
 }
 
-func newSwaggerCtl(cfg *gen.Config, disableConvertOpenApi, overSwaggerV2 bool) *SwaggerCtl {
+func newSwaggerCtl(cfg *gen.Config, disableConvertOpenApi, overrideSwaggerV2 bool, openApiOutputDir string) *SwaggerCtl {
 	return &SwaggerCtl{
 		gen:                   gen.New(),
 		genCfg:                cfg,
 		outputDir:             cfg.OutputDir,
 		disableConvertOpenApi: disableConvertOpenApi,
-		overSwaggerV2:         overSwaggerV2,
+		overrideSwaggerV2:     overrideSwaggerV2,
+		openApiOutputDir:      openApiOutputDir,
 	}
 }
 
@@ -81,19 +84,28 @@ func (s *SwaggerCtl) convert2openApiV3() error {
 
 	var targetJson = filepath.Join(s.outputDir, "swagger.json")
 
-	return swagger2openapi3.Swagger2Convertor(targetJson, s.overSwaggerV2)
+	convertor := swagger2openapi3.NewSwagger2OpenapiConvertor(targetJson, s.overrideSwaggerV2).SetOutputDir(s.openApiOutputDir)
+
+	return convertor.Convert()
 }
 
 var initFlags = []cli.Flag{
 	&cli.BoolFlag{
-		Name:    disableConvertOpenApiV3,
+		Name:    disableConvertOpenApiV3Flag,
 		Aliases: []string{"nc"},
+		Value:   false,
 		Usage:   "Convert generated swagger.json to openApi v3 format, enabled by default",
 	},
 	&cli.BoolFlag{
-		Name:    overSwaggerV2,
-		Aliases: []string{"os"},
-		Usage:   "Generate openApi 3.0 json over the swagger.json which is the output dir join swagger.json",
+		Name:    disableOverwriteSwaggerV2Flag,
+		Aliases: []string{"disOverwrite"},
+		Value:   false,
+		Usage:   "Generate openApi 3.0 json do not overwrite origin swagger.json, disable by default",
+	},
+	&cli.StringFlag{
+		Name:    openapiOutputDirFlag,
+		Aliases: []string{"openo"},
+		Usage:   "OpenapiOutputDir directory for generated openapi v3 spec, default is ./openapi",
 	},
 	&cli.BoolFlag{
 		Name:    quietFlag,
@@ -126,13 +138,13 @@ var initFlags = []cli.Flag{
 		Name:    outputFlag,
 		Aliases: []string{"o"},
 		Value:   "./docs",
-		Usage:   "Output directory for all the generated files(swagger.json, swagger.yaml and docs.go)",
+		Usage:   "OutputDir directory for all the generated files(swagger.json, swagger.yaml and docs.go)",
 	},
 	&cli.StringFlag{
 		Name:    outputTypesFlag,
 		Aliases: []string{"ot"},
 		Value:   "go,json,yaml",
-		Usage:   "Output types of generated files (docs.go, swagger.json, swagger.yaml) like go,json,yaml",
+		Usage:   "OutputDir types of generated files (docs.go, swagger.json, swagger.yaml) like go,json,yaml",
 	},
 	&cli.BoolFlag{
 		Name:  parseVendorFlag,
@@ -301,7 +313,7 @@ func initAction(ctx *cli.Context) error {
 		CollectionFormat:    collectionFormat,
 		PackagePrefix:       ctx.String(packagePrefixFlag),
 		State:               ctx.String(stateFlag),
-	}, ctx.Bool(disableConvertOpenApiV3), ctx.Bool(overSwaggerV2))
+	}, ctx.Bool(disableConvertOpenApiV3Flag), ctx.Bool(disableOverwriteSwaggerV2Flag), ctx.String(openapiOutputDirFlag))
 
 	return swaggerCtl.build().convert2openApiV3()
 }

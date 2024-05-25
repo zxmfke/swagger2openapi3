@@ -10,14 +10,48 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 	"io"
+	"log"
 	"os"
+	"path"
 	"path/filepath"
 )
 
-var Version = "0.0.1"
+var Version = "0.0.2"
 
-// Swagger2Convertor convert swagger2 to openapi3
-func Swagger2Convertor(target string, overSwaggerV2 bool) error {
+type Swagger2OpenapiConvertor struct {
+	Target                    string
+	DisableOverwriteSwaggerV2 bool
+	OutputDir                 string
+}
+
+// NewSwagger2OpenapiConvertor new swagger v2 to openapi v3 convertor
+func NewSwagger2OpenapiConvertor(target string, disableOverwriteSwaggerV2 bool) *Swagger2OpenapiConvertor {
+
+	s := &Swagger2OpenapiConvertor{
+		Target:                    target,
+		DisableOverwriteSwaggerV2: disableOverwriteSwaggerV2,
+		OutputDir:                 "./openapi",
+	}
+
+	if !disableOverwriteSwaggerV2 {
+		s.OutputDir, _ = path.Split(target)
+	}
+
+	return s
+}
+
+// SetOutputDir set openapi v3 spec output dir
+func (s *Swagger2OpenapiConvertor) SetOutputDir(outputDir string) *Swagger2OpenapiConvertor {
+	if s.OutputDir == "" {
+		return s
+	}
+
+	s.OutputDir = outputDir
+	return s
+}
+
+// Convert convert swagger2 to openapi3
+func (s *Swagger2OpenapiConvertor) Convert() error {
 
 	var (
 		err          error
@@ -28,7 +62,7 @@ func Swagger2Convertor(target string, overSwaggerV2 bool) error {
 	)
 
 	// read from input
-	if jsonSwagData, err = LoadAndValidate(target); err != nil {
+	if jsonSwagData, err = s.loadAndValidate(); err != nil {
 		return err
 	}
 
@@ -43,20 +77,15 @@ func Swagger2Convertor(target string, overSwaggerV2 bool) error {
 	}
 
 	// get openapi3 json
-	openapi3Json, _ = Marshal(docOpenapi3)
-	buf := bytes.NewBuffer(openapi3Json)
+	openapi3Json, _ = s.marshal(docOpenapi3)
 
-	if overSwaggerV2 {
-		return WriteOverSwagger(target, buf)
-	}
-
-	return WriteToNewFile(buf)
+	return s.writeToFile(bytes.NewBuffer(openapi3Json))
 }
 
-// LoadAndValidate load input swagger json and validate it
-func LoadAndValidate(target string) ([]byte, error) {
+// loadAndValidate load input swagger json and validate it
+func (s *Swagger2OpenapiConvertor) loadAndValidate() ([]byte, error) {
 
-	doc, err := loads.Spec(target)
+	doc, err := loads.Spec(s.Target)
 	if err != nil {
 		return nil, err
 	}
@@ -71,36 +100,36 @@ func LoadAndValidate(target string) ([]byte, error) {
 	return doc.Raw().MarshalJSON()
 }
 
-// WriteOverSwagger 覆盖掉之前生成的 swagger 2.0 的 swagger.json
-func WriteOverSwagger(target string, reader io.Reader) error {
-	fd, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0776)
-	if err != nil {
+// writeToFile generated openapi v3 spec write to new or override swagger.json
+func (s *Swagger2OpenapiConvertor) writeToFile(reader io.Reader) error {
+
+	var (
+		err       error
+		fd        *os.File
+		writeMode = "overwrite"
+	)
+
+	if s.DisableOverwriteSwaggerV2 {
+		if err = os.MkdirAll(s.OutputDir, 0776); err != nil {
+			return err
+		}
+
+		writeMode = "generate"
+	}
+
+	log.Printf("%s to %s", writeMode, filepath.Join(s.OutputDir, "swagger.json"))
+	if fd, err = os.OpenFile(filepath.Join(s.OutputDir, "swagger.json"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0776); err != nil {
 		return err
 	}
 
 	_, _ = io.Copy(fd, reader)
-	fd.Close()
+	_ = fd.Close()
 
 	return nil
 }
 
-// WriteToNewFile save to a new swagger.json
-func WriteToNewFile(reader io.Reader) error {
-
-	_ = os.MkdirAll("./openapi", 0776)
-	fd, err := os.OpenFile(filepath.Join("./openapi", "swagger.json"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0776)
-	if err != nil {
-		return err
-	}
-
-	_, _ = io.Copy(fd, reader)
-	fd.Close()
-
-	return nil
-}
-
-// Marshal for openapi3.T
-func Marshal(doc *openapi3.T) ([]byte, error) {
+// marshal for openapi3.T
+func (s *Swagger2OpenapiConvertor) marshal(doc *openapi3.T) ([]byte, error) {
 	m := make(map[string]interface{}, 4+len(doc.Extensions))
 	m["openapi"] = doc.OpenAPI
 	m["info"] = doc.Info
