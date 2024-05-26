@@ -9,6 +9,7 @@ import (
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
+	"github.com/invopop/yaml"
 	"io"
 	"log"
 	"os"
@@ -24,7 +25,7 @@ type Swagger2OpenapiConvertor struct {
 	OutputDir                 string
 }
 
-// NewSwagger2OpenapiConvertor new swagger v2 to openapi v3 convertor
+// NewSwagger2OpenapiConvertor new swagger v2 to OpenApi v3 convertor
 func NewSwagger2OpenapiConvertor(target string, disableOverwriteSwaggerV2 bool) *Swagger2OpenapiConvertor {
 
 	s := &Swagger2OpenapiConvertor{
@@ -40,7 +41,7 @@ func NewSwagger2OpenapiConvertor(target string, disableOverwriteSwaggerV2 bool) 
 	return s
 }
 
-// SetOutputDir set openapi v3 spec output dir
+// SetOutputDir set OpenApi v3 spec output dir
 func (s *Swagger2OpenapiConvertor) SetOutputDir(outputDir string) *Swagger2OpenapiConvertor {
 	if s.OutputDir == "" {
 		return s
@@ -76,16 +77,17 @@ func (s *Swagger2OpenapiConvertor) Convert() error {
 		return err
 	}
 
-	// get openapi3 json
+	// get openapi3 json and yaml
 	openapi3Json, _ = s.marshal(docOpenapi3)
+	openapi3Yaml, _ := yaml.JSONToYAML(openapi3Json)
 
-	return s.writeToFile(bytes.NewBuffer(openapi3Json))
+	return s.writeToFile(bytes.NewBuffer(openapi3Json), bytes.NewBuffer(openapi3Yaml))
 }
 
 // loadAndValidate load input swagger json and validate it
 func (s *Swagger2OpenapiConvertor) loadAndValidate() ([]byte, error) {
 
-	doc, err := loads.Spec(s.Target)
+	doc, err := loads.Spec(filepath.Join(s.Target, "swagger.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -100,12 +102,13 @@ func (s *Swagger2OpenapiConvertor) loadAndValidate() ([]byte, error) {
 	return doc.Raw().MarshalJSON()
 }
 
-// writeToFile generated openapi v3 spec write to new or override swagger.json
-func (s *Swagger2OpenapiConvertor) writeToFile(reader io.Reader) error {
+// writeToFile generated OpenApi v3 spec write to new or override swagger.json & swagger.yaml
+func (s *Swagger2OpenapiConvertor) writeToFile(jsonReader, yamlReader io.Reader) error {
 
 	var (
 		err       error
-		fd        *os.File
+		jsonFd    *os.File
+		yamlFd    *os.File
 		writeMode = "overwrite"
 	)
 
@@ -117,13 +120,20 @@ func (s *Swagger2OpenapiConvertor) writeToFile(reader io.Reader) error {
 		writeMode = "generate"
 	}
 
-	log.Printf("%s to %s", writeMode, filepath.Join(s.OutputDir, "swagger.json"))
-	if fd, err = os.OpenFile(filepath.Join(s.OutputDir, "swagger.json"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0776); err != nil {
+	log.Printf("%s to %s,%s", writeMode, filepath.Join(s.OutputDir, "swagger.json"), filepath.Join(s.OutputDir, "swagger.yaml"))
+	if jsonFd, err = os.OpenFile(filepath.Join(s.OutputDir, "swagger.json"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0776); err != nil {
 		return err
 	}
 
-	_, _ = io.Copy(fd, reader)
-	_ = fd.Close()
+	if yamlFd, err = os.OpenFile(filepath.Join(s.OutputDir, "swagger.yaml"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0776); err != nil {
+		return err
+	}
+
+	_, _ = io.Copy(jsonFd, jsonReader)
+	_ = jsonFd.Close()
+
+	_, _ = io.Copy(yamlFd, yamlReader)
+	_ = yamlFd.Close()
 
 	return nil
 }

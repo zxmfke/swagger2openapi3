@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 	swagger2openapi3 "train/swagger"
 
@@ -82,11 +81,9 @@ func (s *SwaggerCtl) convert2openApiV3() error {
 		return nil
 	}
 
-	var targetJson = filepath.Join(s.outputDir, "swagger.json")
-
-	convertor := swagger2openapi3.NewSwagger2OpenapiConvertor(targetJson, s.overrideSwaggerV2).SetOutputDir(s.openApiOutputDir)
-
-	return convertor.Convert()
+	return swagger2openapi3.NewSwagger2OpenapiConvertor(s.outputDir, s.overrideSwaggerV2).
+		SetOutputDir(s.openApiOutputDir).
+		Convert()
 }
 
 var initFlags = []cli.Flag{
@@ -105,7 +102,7 @@ var initFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:    openapiOutputDirFlag,
 		Aliases: []string{"openo"},
-		Usage:   "OpenapiOutputDir directory for generated openapi v3 spec, default is ./openapi",
+		Usage:   "OpenapiOutputDir directory for generated OpenApi v3 spec, default is ./openapi",
 	},
 	&cli.BoolFlag{
 		Name:    quietFlag,
