@@ -2,7 +2,7 @@
 
 🌍 *[English](README.md) ∙ [Chinese](README_zh-CN.md)*
 
-Swagger2openapi3 provides a package to convert Swagger 2.0 specification JSON and YAML to OpenAPI 3.0.1. It also provides a tool called `swag2op`, which integrates Swagger 2.0 generation and supports conversion to OpenAPI 3.0.3.
+Swagger2openapi3 provides a package to convert Swagger 2.0 specification JSON and YAML to OpenAPI 3.0.1. It also provides a tool called `swag2op`, which integrates [Swagger 2.0](https://github.com/swaggo/swag) generation and supports conversion to OpenAPI 3.0.3.
 
 ## Getting Started
 
