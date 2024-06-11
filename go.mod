@@ -1,6 +1,6 @@
 module github.com/zxmfke/swagger2openapi3
 
-go 1.22
+go 1.20
 
 require (
 	github.com/getkin/kin-openapi v0.124.0
